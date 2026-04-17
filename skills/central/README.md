@@ -1,123 +1,43 @@
-# openclaw-skills
+# Skill Aruba Central — OpenClaw
 
-> Collection de skills Python pour [OpenClaw](https://openclaw.ai) — agent IA local piloté via Discord.
+> Skill hybride Classic Central (monitoring) + New Central (config) pour OpenClaw.
 
-Chaque skill expose des commandes en langage naturel pour interroger et piloter une infrastructure réseau ou IT sans ouvrir de console.
+## Vue d'ensemble
 
-```
-Discord : "@bakaopenclaw stats central"
-    │
-    ▼
-OpenClaw (gemma4:e4b, RTX 3060)
-    │
-    ├── skill/central  → HPE Aruba Central REST API
-    ├── skill/mist     → Juniper Mist Cloud API
-    └── skill/proxmox  → Proxmox VE API
-```
+| API | Usage | Endpoint |
+|-----|-------|----------|
+| Classic Central REST | Monitoring (APs, switches, clients, alertes) | `apigw-<cluster>.central.arubanetworks.com` |
+| New Central REST | Config (groupes, hiérarchie) | `<cluster>.api.central.arubanetworks.com` |
+| New Central GraphQL | Monitoring temps réel | Session browser uniquement — non supporté |
 
-## Skills disponibles
+> **Note :** New Central est en beta. Classic Central reste en production jusqu'en septembre 2025.
 
-| Skill | Version | Description |
-|-------|---------|-------------|
-| [central](./skills/central/) | v2.0 | HPE Aruba Central — monitoring APs, switches, clients + config groupes |
-| [mist](./skills/mist/) | v1.2 | Juniper Mist — APs, switches, clients, WLANs, events |
-| [proxmox](./skills/proxmox/) | v1.0 | Proxmox VE — VMs, containers, nodes, storage |
-
-## Plateforme
-
-Développé et testé sur **Bakastation** :
-
-| Composant | Détail |
-|-----------|--------|
-| OS | Fedora 43 bare metal |
-| CPU | Intel i9-10850K |
-| RAM | 128 GB |
-| GPU | NVIDIA RTX 3060 12GB (driver 570, CUDA 12.8) |
-| LLM | gemma4:e4b via Ollama (43/43 layers GPU, ~75 t/s) |
-| OpenClaw | openclaw-gateway (systemd user service) |
-
-## Installation
-
-### 1. Cloner le repo
-
-```bash
-git clone https://github.com/Luconik/openclaw-skills.git
-cd openclaw-skills
-```
-
-### 2. Installer les dépendances Python
+## Prérequis
 
 ```bash
 pip3 install python-dotenv requests --break-system-packages
 ```
 
-### 3. Copier les skills dans OpenClaw
+## Commandes
 
 ```bash
-cp -r skills/central ~/.openclaw/workspace/skills/
-cp -r skills/mist    ~/.openclaw/workspace/skills/
-cp -r skills/proxmox ~/.openclaw/workspace/skills/
+python3 central.py stats
+python3 central.py aps [--site <n>] [--search <term>]
+python3 central.py switches [--site <n>]
+python3 central.py clients [--site <n>] [--search <term>]
+python3 central.py sites
+python3 central.py alerts
+python3 central.py groups
+python3 central.py reboot --serial <serial>
 ```
 
-### 4. Configurer les credentials
+## Authentification
 
-Chaque skill dispose d'un `.env.example` à copier et remplir :
+- Classic Central : refresh_token auto, bootstrap via CENTRAL_CLASSIC_TOKEN
+- GreenLake : client_credentials auto, token 2h
 
-```bash
-cp skills/central/.env.example skills/central/.env
-# Éditer .env avec vos credentials
-```
+## Limitations
 
-### 5. Mettre à jour le SOUL.md
-
-Ajouter les skills dans `~/.openclaw/workspace/SOUL.md` en suivant les exemples dans chaque `SKILL.md`.
-
-### 6. Redémarrer OpenClaw
-
-```bash
-systemctl --user restart openclaw-gateway
-```
-
-## Structure du repo
-
-```
-openclaw-skills/
-├── README.md
-├── skills/
-│   ├── central/
-│   │   ├── central.py       # Script principal
-│   │   ├── SKILL.md         # Instructions OpenClaw
-│   │   ├── .env.example     # Template credentials
-│   │   └── README.md        # Documentation complète
-│   ├── mist/
-│   │   ├── mist.py
-│   │   ├── SKILL.md
-│   │   ├── .env.example
-│   │   └── README.md
-│   └── proxmox/
-│       ├── proxmox.py
-│       ├── SKILL.md
-│       ├── .env.example
-│       └── README.md
-└── docs/
-    └── bakastation-setup.md  # Installation OpenClaw sur Fedora 43
-```
-
-## Sécurité
-
-- Les fichiers `.env` sont exclus du repo via `.gitignore`
-- Ne jamais committer de tokens ou credentials
-- Les `.env.example` contiennent uniquement des placeholders
-
-## Liens
-
-- [OpenClaw](https://openclaw.ai)
-- [HPE Aruba Developer Hub](https://developer.arubanetworks.com)
-- [Juniper Mist API](https://api.mist.com)
-- [homelab-setup](https://github.com/Luconik/homelab-setup) — Infrastructure bakastation
-- [netdevops](https://github.com/Luconik/netdevops) — Ansible, Terraform, Containerlab HPE Aruba
-
-## Auteur
-
-Nicolas Culetto — Channel Presales Consultant, HPE Aruba Networking  
-[LinkedIn](https://linkedin.com/in/nicolasculetto) · [GitHub](https://github.com/Luconik)
+- Monitoring New Central = GraphQL uniquement — non supporté
+- Token Classic refresh_token expire en 30j — régénération manuelle si expiré
+- Rate limiting Classic Central : 7 appels/seconde
