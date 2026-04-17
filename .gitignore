@@ -1,0 +1,18 @@
+# Credentials — never commit
+.env
+*.token.json
+.classic_token.json
+.gl_token.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.python-version
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
