@@ -1,15 +1,22 @@
 import os, sys, json, requests, argparse
+from pathlib import Path
+_env = Path(__file__).parent / ".env"
+if _env.exists():
+    for _l in _env.read_text().splitlines():
+        if "=" in _l and not _l.startswith("#"):
+            k, v = _l.split("=", 1)
+            os.environ.setdefault(k.strip(), v.strip())
 from urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-# Node configuration — override via environment variables
+# Configs par node
 NODES_CONFIG = {
     "pve1": {
-        "host": os.environ.get("PVE1_HOST", os.environ.get("PVE_HOST", "192.168.1.10")),
+        "host": os.environ.get("PVE1_HOST", os.environ.get("PVE_HOST", "10.224.100.111")),
         "token": os.environ.get("PVE1_TOKEN", os.environ.get("PVE_TOKEN", ""))
     },
     "pve2": {
-        "host": os.environ.get("PVE2_HOST", os.environ.get("PVE_HOST", "192.168.1.11")),
+        "host": os.environ.get("PVE2_HOST", os.environ.get("PVE_HOST", "10.224.100.112")),
         "token": os.environ.get("PVE2_TOKEN", os.environ.get("PVE_TOKEN", ""))
     }
 }
@@ -44,7 +51,7 @@ def storage(node="pve1"):
     return get(f"nodes/{node}/storage", node)
 
 if __name__ == "__main__":
-    cmd  = sys.argv[1] if len(sys.argv) > 1 else "nodes"
+    cmd = sys.argv[1] if len(sys.argv) > 1 else "nodes"
     arg1 = sys.argv[2] if len(sys.argv) > 2 else "pve1"
     arg2 = sys.argv[3] if len(sys.argv) > 3 else None
 
